@@ -22,233 +22,205 @@ interface Job {
   pay: number;
   min_age: number;
   logo_url: string;
+  user_id: string;
 }
 
-// const ModalHandler = () => {
-//   const [loading, setLoading] = useState(false);
-//   const [error, setError] = useState<string | null>(null);
+// modal form stufffff
+const PostingForm = ({
+  closeModal,
+  refreshJobs,
+  userId,
+}: {
+  closeModal: () => void;
+  refreshJobs: () => void;
+  userId: string;
+}) => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    title: "",
+    company: "",
+    pay: 0,
+    min_age: 0,
+  });
 
-//   // form input handling
-//   const [title, setTitle] = useState("");
-//   const [company, setCompany] = useState("");
-//   const [pay, setPay] = useState(0);
-//   const [age, setAge] = useState(0);
-//   // const [logoUrl, setLogoUrl] = useState("");
-//   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-//   const fileInputRef = useRef<HTMLInputElement>(null);
-//   const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
 
-//   const PreviewComponent = () => {
-//     const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
-//       try {
-//         const file = event.target.files?.[0];
-//         setError(null);
-//         if (file) {
-//           if (allowedTypes.includes(file.type)) {
-//             const reader = new FileReader();
-//             reader.onloadend = () => {
-//               setPreviewUrl(reader.result as string);
-//             };
-//             reader.readAsDataURL(file);
-//           } else {
-//             setError("Please upload a JPG or PNG file.");
-//             setPreviewUrl(null);
-//           }
-//         }
-//       } catch (error) {
-//         setError(error instanceof Error ? error.message : "An error occurred");
-//       }
-//     };
+    if (id === "pay" || id === "min_age") {
+      setFormData({
+        ...formData,
+        [id]: value === "" ? 0 : parseInt(value),
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [id]: value,
+      });
+    }
+  };
 
-//     const handleUploadClick = () => {
-//       fileInputRef.current?.click();
-//     };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
 
-//     return (
-//       // returns just the image upload button and preview
-//       <div className="w-full">
-//         <div className="flex flex-col items-center w-full gap-y-2">
-//           <button
-//             type="button"
-//             onClick={handleUploadClick}
-//             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-//           >
-//             Upload Logo
-//           </button>
+    try {
+      const logoUrl =
+        "https://riurrnlnfnpdkeiagtxf.supabase.co/storage/v1/object/public/logos/placeholder-logo.png";
 
-//           <input
-//             type="file"
-//             ref={fileInputRef}
-//             onChange={handleFileChange}
-//             accept=".jpg,.jpeg,.png"
-//             className="hidden"
-//           />
-//           {previewUrl ? (
-//             <div className="w-36 h-36 border border-gray-300 rounded-md overflow-hidden">
-//               <img
-//                 src={previewUrl || "/placeholder.svg"}
-//                 alt="Company logo preview"
-//                 className="w-full h-full object-cover"
-//               />
-//             </div>
-//           ) : (
-//             <div className="w-36 h-36 border border-gray-300 rounded-md flex items-center justify-center text-gray-400">
-//               No logo
-//             </div>
-//           )}
-//         </div>
-//         {error && <p className="text-red-500">{error}</p>}
-//       </div>
-//     );
-//   };
+      const { error } = await supabase.from("jobs").insert([
+        {
+          title: formData.title,
+          company: formData.company,
+          pay: formData.pay,
+          min_age: formData.min_age,
+          logo_url: logoUrl,
+          user_id: userId,
+        },
+      ]);
 
-//   const jobPost = async (e: React.FormEvent) => {
-//     // e.preventDefault();
-//     // setLoading(true);
-//     // setError(null);
-//     // let logoUrl = null;
+      if (error) throw error;
 
-//     // try {
-//     //   // handle image if preview exists
-//     //   {
-//     //     /* if (previewUrl) {
-//     //     const file = fileInputRef.current?.files?.[0];
-//     //     if (file) {
-//     //       const fileExt = file.name.split(".").pop();
-//     //       const fileName = `${idgen()}.${fileExt}`;
-//     //       const { error: uploadError, data } = await supabase.storage
-//     //         .from("logos")
-//     //         .upload(fileName, file);
-//     //       if (uploadError) throw uploadError;
+      refreshJobs();
+      closeModal();
+    } catch (error) {
+      setError(
+        error instanceof Error ? error.message : "error occured when posting gg"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
-//     //       const {
-//     //         data: { publicUrl },
-//     //       } = supabase.storage.from("logos").getPublicUrl(fileName);
-//     //       logoUrl = publicUrl;
-//     //     }
-//     //   } */
-//     //   }
-//     //   // now we can push ⚡️ the data to the table
-//     //   const { error } = await supabase
-//     //     .from("jobs")
-//     //     .insert([{ title, company, pay, age }]);
-//     //   if (error) throw error;
-//     // } catch (error) {
-//     //   setError(
-//     //     error instanceof Error
-//     //       ? error.message
-//     //       : "error occured and no specific message we are cooked lol"
-//     //   );
-//     // }
-//     e.preventDefault();
+  return (
+    <>
+      <form
+        onSubmit={handleSubmit}
+        className="relative bg-white rounded-lg max-w-lg w-full m-4 p-4"
+      >
+        <div className="mt-2">
+          <label htmlFor="title" className="block text-md text-gray-700">
+            Job Title
+          </label>
+          <input
+            id="title"
+            type="text"
+            value={formData.title}
+            required
+            onChange={handleInputChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
 
-//     try {
-//       const { data, error } = await supabase
-//         .from("jobs")
-//         .insert([{ title, company, pay, age }])
-//         .select();
-//     } catch (error) {
-//       console.error("Error posting job:", error);
-//     }
+        <div className="my-4">
+          <label htmlFor="company" className="block text-md text-gray-700">
+            Company Name
+          </label>
+          <input
+            id="company"
+            type="text"
+            value={formData.company}
+            required
+            onChange={handleInputChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
 
-//     return (
-//       <>
-//         <form
-//           onSubmit={jobPost}
-//           className="relative bg-white rounded-lg max-w-lg w-full m-4 p-4"
-//         >
-//           <div className="mt-2">
-//             <label htmlFor="title" className="block text-md text-gray-700">
-//               Job Title
-//             </label>
-//             <input
-//               id="title"
-//               type="text"
-//               value={title}
-//               required
-//               onChange={(e) => setTitle(e.target.value)}
-//               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focusing:ring-blue-500 focus:border-blue-500"
-//             />
-//           </div>
-//           <div className="my-4">
-//             <label htmlFor="company" className="block text-md text-gray-700">
-//               Company Name
-//             </label>
-//             <input
-//               id="company"
-//               type="text"
-//               value={company}
-//               required
-//               onChange={(e) => setCompany(e.target.value)}
-//               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focusing:ring-blue-500 focus:border-blue-500"
-//             />
-//           </div>
-//           <div className="my-4">
-//             <div className="flex flex-row gap-4">
-//               <div className="flex flex-col gap-8 w-full">
-//                 <div className="w-full">
-//                   <label htmlFor="pay" className="block text-md text-gray-700">
-//                     Hourly Wage
-//                   </label>
-//                   <input
-//                     id="pay"
-//                     type="number"
-//                     value={pay}
-//                     required
-//                     min="5"
-//                     onChange={(e) => {
-//                       const value =
-//                         e.target.value === "" ? 0 : parseInt(e.target.value);
-//                       setPay(value);
-//                     }}
-//                     onKeyDown={(e) => {
-//                       if (e.key === ".") {
-//                         e.preventDefault();
-//                       }
-//                     }}
-//                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focusing:ring-blue-500 focus:border-blue-500"
-//                   />
-//                 </div>
-//                 <div className="w-full">
-//                   <label htmlFor="age" className="block text-md text-gray-700">
-//                     Minimum Age
-//                   </label>
-//                   <input
-//                     id="pay"
-//                     type="number"
-//                     value={age}
-//                     required
-//                     min="0"
-//                     onChange={(e) => {
-//                       const value =
-//                         e.target.value === "" ? 0 : parseInt(e.target.value);
-//                       setAge(value);
-//                     }}
-//                     onKeyDown={(e) => {
-//                       if (e.key === ".") {
-//                         e.preventDefault();
-//                       }
-//                     }}
-//                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focusing:ring-blue-500 focus:border-blue-500"
-//                   />
-//                 </div>
-//               </div>
-//               <>{/* <PreviewComponent /> */}</>
-//             </div>
-//           </div>
-//           <div className="w-full flex flex-row justify-end">
-//             <button
-//               type="submit"
-//               className="p-2 mt-4 rounded-md bg-green-500 text-white"
-//             >
-//               Submit
-//             </button>
-//           </div>
-//         </form>
-//       </>
-//     );
-//   };
-// };
+        <div className="my-4 grid grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="pay" className="block text-md text-gray-700">
+              Hourly Wage
+            </label>
+            <input
+              id="pay"
+              type="number"
+              value={formData.pay || ""}
+              required
+              min="5"
+              onChange={handleInputChange}
+              onKeyDown={(e) => {
+                if (e.key === ".") {
+                  e.preventDefault();
+                }
+              }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="min_age" className="block text-md text-gray-700">
+              Minimum Age
+            </label>
+            <input
+              id="min_age"
+              type="number"
+              value={formData.min_age || ""}
+              required
+              min="0"
+              onChange={handleInputChange}
+              onKeyDown={(e) => {
+                if (e.key === ".") {
+                  e.preventDefault();
+                }
+              }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+        </div>
+
+        <div className="w-full flex flex-row justify-end">
+          <button
+            type="submit"
+            disabled={loading}
+            className="p-2 mt-4 rounded-md bg-green-500 text-white hover:bg-green-600 transition-colors"
+          >
+            {loading ? "Submitting..." : "Submit"}
+          </button>
+        </div>
+
+        {error && <p className="text-red-500 mt-2">{error}</p>}
+      </form>
+    </>
+  );
+};
+
+// delete postinggggggg
+// Add this component definition above the default function (outside of Jobs)
+const DeleteButton = ({
+  job,
+  onDelete,
+}: {
+  job: Job;
+  onDelete: () => void;
+}) => {
+  const handleDelete = async () => {
+    if (confirm("Are you sure you want to delete this job posting?")) {
+      try {
+        const { error } = await supabase.from("jobs").delete().eq("id", job.id);
+
+        if (error) throw error;
+
+        // Call the onDelete callback to refresh jobs
+        onDelete();
+      } catch (error) {
+        console.error("Error deleting job:", error);
+        alert("Failed to delete job posting");
+      }
+    }
+  };
+
+  return (
+    <div className="md:col-span-2 mt-2">
+      <button
+        onClick={handleDelete}
+        className="w-full bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg transition-colors"
+      >
+        Delete Job Posting
+      </button>
+    </div>
+  );
+};
 
 export default function Jobs() {
   // loading state based stuff (use this for later for loading screen stuff I THINK?)
@@ -284,6 +256,7 @@ export default function Jobs() {
   // 9:22 PM 2/12/25 - role is now added automatically when a new user signs up BOOM
   const { user } = useUser();
   const hasCompRole = user?.publicMetadata?.role === "comp";
+  const isAuthor = user?.id === selectedJob?.user_id;
 
   return (
     <main className="min-h-screen flex flex-col itemscenter">
@@ -380,6 +353,15 @@ export default function Jobs() {
                       </span>
                     </div>
                   </div>
+                  {isAuthor && (
+                    <DeleteButton
+                      job={selectedJob}
+                      onDelete={() => {
+                        fetchJobs();
+                        setSelectedJob(null);
+                      }}
+                    />
+                  )}
                 </div>
               </div>
             </div>
@@ -395,7 +377,11 @@ export default function Jobs() {
               >
                 <X size={30} className="bg-red-400 rounded-lg p-2 text-white" />
               </button>
-              {/* <ModalHandler /> */}
+              <PostingForm
+                closeModal={closeModal}
+                refreshJobs={fetchJobs}
+                userId={user?.id || ""}
+              />
             </div>
           </div>
         )}
