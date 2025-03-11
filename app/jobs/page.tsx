@@ -11,9 +11,8 @@ import { Bookmark, ExternalLink, X } from "lucide-react";
 import { v4 as idgen } from "uuid";
 
 // type clerk shi
-import { useAuth, useOrganization, useUser } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
 import Image from "next/image";
-import { error } from "console";
 
 // learn what an interface does dood
 interface Job {
@@ -263,6 +262,7 @@ const ApplyButton = ({
       alert("Failed to apply to job");
     }
   };
+  // i scared of being depressed again - reason why i think the way i do about college and life lol
 
   return (
     <>
@@ -308,7 +308,7 @@ export default function Jobs() {
   // clerk auth stuff to test
   // 9:17 PM 2/11/25 - THESE TWO LINES ACTUALLY WORK LOL; WE CAN CHECK STATUS VIA THIS; MAKE SURE TO ADD THE ROLE IN PUBLIC METADATA OF THE USER!!!
   // 9:22 PM 2/12/25 - role is now added automatically when a new user signs up BOOM
-  const { user } = useUser();
+  const { user, isSignedIn } = useUser();
   const hasCompRole = user?.publicMetadata?.role === "comp";
   const isAuthor = user?.id === selectedJob?.user_id;
 
@@ -407,7 +407,7 @@ export default function Jobs() {
                       </span>
                     </div>
                   </div>
-                  {isAuthor && (
+                  {isAuthor && isSignedIn && (
                     <DeleteButton
                       job={selectedJob}
                       onDelete={() => {
@@ -416,8 +416,7 @@ export default function Jobs() {
                       }}
                     />
                   )}
-                  {/* this breaks the entire thing if the person is signed out and is on the jobs page */}
-                  {!isAuthor && (
+                  {!isAuthor && isSignedIn && (
                     <ApplyButton
                       currentUserId={user!.id}
                       authorId={selectedJob!.user_id}
