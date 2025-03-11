@@ -13,6 +13,7 @@ import { v4 as idgen } from "uuid";
 // type clerk shi
 import { useAuth, useOrganization, useUser } from "@clerk/nextjs";
 import Image from "next/image";
+import { error } from "console";
 
 // learn what an interface does dood
 interface Job {
@@ -186,7 +187,6 @@ const PostingForm = ({
 };
 
 // delete postinggggggg
-// Add this component definition above the default function (outside of Jobs)
 const DeleteButton = ({
   job,
   onDelete,
@@ -198,10 +198,7 @@ const DeleteButton = ({
     if (confirm("Are you sure you want to delete this job posting?")) {
       try {
         const { error } = await supabase.from("jobs").delete().eq("id", job.id);
-
         if (error) throw error;
-
-        // Call the onDelete callback to refresh jobs
         onDelete();
       } catch (error) {
         console.error("Error deleting job:", error);
@@ -219,6 +216,63 @@ const DeleteButton = ({
         Delete Job Posting
       </button>
     </div>
+  );
+};
+
+const ApplyButton = ({
+  currentUserId,
+  authorId,
+  onApply,
+}: {
+  currentUserId: string;
+  authorId: string;
+  onApply: () => void;
+}) => {
+  const handleApply = async () => {
+    try {
+      const chatTitle = `${currentUserId}-${authorId}`;
+
+      const { data, error: fetchError } = await supabase
+        .from("chats")
+        .select("*")
+        .eq("chat_title", chatTitle);
+
+      if (fetchError) throw fetchError;
+
+      if (data && data.length > 0) {
+        alert("You've already applied to this job");
+        return;
+      }
+
+      const currentTime = new Date().toISOString();
+
+      const { error: insertError } = await supabase.from("chats").insert([
+        {
+          chat_title: `${currentUserId}-${authorId}`,
+          applicant_id: currentUserId,
+          poster_id: authorId,
+          created_at: currentTime,
+          updated_at: currentTime,
+        },
+      ]);
+      if (insertError) throw insertError;
+
+      alert("Successfully applied to job!");
+    } catch (err) {
+      console.error("Error applying job:", err);
+      alert("Failed to apply to job");
+    }
+  };
+
+  return (
+    <>
+      <button
+        onClick={handleApply}
+        className="w-full my-4 bg-blue-400 hover:bg-blue-500 text-white py-2 rounded-lg transition-colors"
+      >
+        Apply!
+      </button>
+    </>
   );
 };
 
@@ -360,6 +414,14 @@ export default function Jobs() {
                         fetchJobs();
                         setSelectedJob(null);
                       }}
+                    />
+                  )}
+                  {/* this breaks the entire thing if the person is signed out and is on the jobs page */}
+                  {!isAuthor && (
+                    <ApplyButton
+                      currentUserId={user!.id}
+                      authorId={selectedJob!.user_id}
+                      onApply={() => fetchJobs()}
                     />
                   )}
                 </div>

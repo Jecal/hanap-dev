@@ -2,9 +2,10 @@ import Link from "next/link";
 import Image from "next/image";
 
 import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+import { Inbox } from "lucide-react";
 
 type NavbarProps = {
-  currentPage: "home" | "jobs" | "laws" | "resume" | "login";
+  currentPage: "home" | "jobs" | "inbox";
 };
 
 export default function Navbar({ currentPage }: NavbarProps) {
@@ -21,14 +22,24 @@ export default function Navbar({ currentPage }: NavbarProps) {
               currentPage === "jobs" ? "text-gray-900" : ""
             }`}
           >
-            opportunity!
+            postings!
           </Link>
         </div>
         <SignedOut>
           <SignInButton />
         </SignedOut>
         <SignedIn>
-          <UserButton />
+          <div className="flex gap-5">
+            <Link
+              href="/inbox"
+              className={`text-gray-400 hover:text-gray-900 transition-colors ${
+                currentPage === "inbox" ? "text-gray-900" : ""
+              }`}
+            >
+              <Inbox strokeWidth={1} />
+            </Link>
+            <UserButton />
+          </div>
         </SignedIn>{" "}
         {/* modify this button so that when hovered it does the same effect as the jobs button*/}
       </div>

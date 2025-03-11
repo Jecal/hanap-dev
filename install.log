@@ -1,0 +1,9 @@
+[16:10:24 2025-03-09] FETCHING Version 2.39.5
+[16:10:24 2025-03-09] CREATING /Users/jecal/.spicetify
+[16:10:24 2025-03-09] DOWNLOADING https://github.com/spicetify/cli/releases/download/v2.39.5/spicetify-2.39.5-darwin-arm64.tar.gz
+[16:10:24 2025-03-09] EXTRACTING /Users/jecal/.spicetify/spicetify.tar.gz
+[16:10:25 2025-03-09] SETTING EXECUTABLE PERMISSIONS TO /Users/jecal/.spicetify/spicetify
+[16:10:25 2025-03-09] REMOVING /Users/jecal/.spicetify/spicetify.tar.gz
+[16:10:25 2025-03-09] APPENDING /Users/jecal/.spicetify to PATH in /Users/jecal/.zshrc
+[16:10:25 2025-03-09] spicetify v2.39.5 was installed successfully to /Users/jecal/.spicetify
+[16:10:25 2025-03-09] Run 'spicetify --help' to get started
