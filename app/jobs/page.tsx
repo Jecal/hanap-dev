@@ -22,7 +22,7 @@ interface Job {
   pay: number;
   min_age: number;
   logo_url: string;
-  user_id: string;
+  author_id: string;
 }
 
 // modal form stufffff
@@ -46,7 +46,6 @@ const PostingForm = ({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
-
     if (id === "pay" || id === "min_age") {
       setFormData({
         ...formData,
@@ -76,7 +75,7 @@ const PostingForm = ({
           pay: formData.pay,
           min_age: formData.min_age,
           logo_url: logoUrl,
-          user_id: userId,
+          author_id: userId,
         },
       ]);
 
@@ -220,49 +219,43 @@ const DeleteButton = ({
 
 const ApplyButton = ({
   currentUserId,
-  authorId,
+  selectedJobId,
   onApply,
 }: {
   currentUserId: string;
-  authorId: string;
+  selectedJobId: number;
   onApply: () => void;
 }) => {
   const handleApply = async () => {
     try {
-      const chatTitle = `${currentUserId}-${authorId}`;
-
-      const { data, error: fetchError } = await supabase
+      const { count, error: countError } = await supabase
         .from("chats")
-        .select("*")
-        .eq("chat_title", chatTitle);
-
-      if (fetchError) throw fetchError;
-
-      if (data && data.length > 0) {
+        .select("*", { count: "exact", head: true })
+        .match({ job_id: selectedJobId, applicant_id: currentUserId });
+      if (countError) throw countError;
+      // check data length, if >0, data exists therefore user has applied
+      if (count! > 0) {
         alert("You've already applied to this job");
         return;
       }
-
-      const currentTime = new Date().toISOString();
-
+      const time = new Date().toISOString();
       const { error: insertError } = await supabase.from("chats").insert([
         {
-          chat_title: `${currentUserId}-${authorId}`,
+          job_id: selectedJobId,
           applicant_id: currentUserId,
-          poster_id: authorId,
-          created_at: currentTime,
-          updated_at: currentTime,
+          created_at: time,
+          updated_at: time,
         },
       ]);
       if (insertError) throw insertError;
 
-      alert("Successfully applied to job!");
+      alert("successfully applied to job");
     } catch (err) {
-      console.error("Error applying job:", err);
-      alert("Failed to apply to job");
+      console.error("error applying job:", err);
+      alert("failed to apply to job");
     }
   };
-  // i scared of being depressed again - reason why i think the way i do about college and life lol
+  // i am scared of being depressed again - reason why i think the way i do about college and life lol
 
   return (
     <>
@@ -310,7 +303,7 @@ export default function Jobs() {
   // 9:22 PM 2/12/25 - role is now added automatically when a new user signs up BOOM
   const { user, isSignedIn } = useUser();
   const hasCompRole = user?.publicMetadata?.role === "comp";
-  const isAuthor = user?.id === selectedJob?.user_id;
+  const isAuthor = user?.id === selectedJob?.author_id;
 
   return (
     <main className="min-h-screen flex flex-col itemscenter">
@@ -419,7 +412,7 @@ export default function Jobs() {
                   {!isAuthor && isSignedIn && (
                     <ApplyButton
                       currentUserId={user!.id}
-                      authorId={selectedJob!.user_id}
+                      selectedJobId={selectedJob.id}
                       onApply={() => fetchJobs()}
                     />
                   )}
